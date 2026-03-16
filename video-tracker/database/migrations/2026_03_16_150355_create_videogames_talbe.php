@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('genero');
             $table->string('plataforma');
             $table->text('resumen')->nullable();
-            $table->integer('puntiacion_media')->default(0);
+            $table->integer('puntuacion_media')->default(0);
             $table->timestamps();
         });
     }
