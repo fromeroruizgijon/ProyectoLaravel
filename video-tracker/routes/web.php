@@ -3,13 +3,18 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VideogameController;
+use App\Models\Videogame;
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return view('auth.login');
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    // Cogemos los últimos 5 videojuegos creados
+    $ultimosJuegos = Videogame::latest()->take(5)->get();
+    
+    // Pasamos los datos a la vista
+    return view('dashboard', compact('ultimosJuegos'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
