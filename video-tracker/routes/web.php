@@ -19,7 +19,7 @@ Route::get('/dashboard', function () {
         'completados' => Videogame::where('user_id', $user_id)->where('estado', 'Completado')->count(),
     ];
 
-    $ultimosJuegos = Videogame::where('user_id', $user_id)->latest()->take(5)->get();
+    $ultimosJuegos = Videogame::latest()->take(5)->get();
     
     return view('dashboard', compact('ultimosJuegos', 'stats'));
 })->middleware(['auth'])->name('dashboard');
