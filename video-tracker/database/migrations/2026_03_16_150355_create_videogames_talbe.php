@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('plataforma');
             $table->text('resumen')->nullable();
             $table->integer('puntuacion_media')->default(0);
+            $table->enum('estado', ['Pendiente', 'Jugando', 'Completado', 'Abandonado'])->default('Pendiente');
             $table->timestamps();
         });
     }

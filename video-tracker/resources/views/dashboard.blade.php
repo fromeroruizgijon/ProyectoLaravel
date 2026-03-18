@@ -10,18 +10,16 @@
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-indigo-500">
-                    <p class="text-sm text-gray-500 uppercase font-bold">Total Colección</p>
-                    <p class="text-3xl font-black text-gray-800">{{ \App\Models\Videogame::count() }}</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
-                    <p class="text-sm text-gray-500 uppercase font-bold">Mejor Valorado</p>
-                    <p class="text-xl font-bold text-gray-800">
-                        {{ \App\Models\Videogame::orderBy('puntuacion_media', 'desc')->first()->titulo ?? 'N/A' }}
-                    </p>
+                    <p class="text-sm text-gray-500 uppercase font-bold">Total Juegos</p>
+                    <p class="text-3xl font-black">{{ $stats['total'] }}</p>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-yellow-500">
-                    <p class="text-sm text-gray-500 uppercase font-bold">Estado del Sistema</p>
-                    <p class="text-xl font-bold text-green-600">Online</p>
+                    <p class="text-sm text-gray-500 uppercase font-bold">En Proceso 🕹️</p>
+                    <p class="text-3xl font-black text-yellow-600">{{ $stats['jugando'] }}</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
+                    <p class="text-sm text-gray-500 uppercase font-bold">Completados ✅</p>
+                    <p class="text-3xl font-black text-green-600">{{ $stats['completados'] }}</p>
                 </div>
             </div>
 

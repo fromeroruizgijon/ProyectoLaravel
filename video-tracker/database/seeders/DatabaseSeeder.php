@@ -16,12 +16,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-       Videogame::factory(20)->create();
+        // 1. Creamos un usuario de prueba
+    $user = User::factory()->create([
+        'name' => 'Usuario Prueba',
+        'email' => 'test@example.com',
+    ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+    // 2. Creamos los 20 videojuegos asignándoselos a ese usuario
+    Videogame::factory(20)->create([
+        'user_id' => $user->id,
+    ]);
     }
 }

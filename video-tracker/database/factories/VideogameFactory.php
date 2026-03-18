@@ -23,6 +23,7 @@ class VideogameFactory extends Factory
             'plataforma' => $this->faker->randomElement(['PC', 'PS5', 'Xbox', 'Switch']),
             'resumen' => $this->faker->paragraph(),
             'puntuacion_media' => $this->faker->numberBetween(1, 10),
+            'user_id' => \App\Models\User::all()->random()->id ?? \App\Models\User::factory(),
         ];
     }
 }
