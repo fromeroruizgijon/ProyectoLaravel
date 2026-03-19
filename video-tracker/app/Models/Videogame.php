@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class Videogame extends Model
 {
     use HasFactory;
-    protected $fillable = ['titulo', 'genero', 'plataforma', 'puntuacion_media', 'user_id', 'estado'];
+    protected $fillable = ['user_id', 'game_id', 'plataforma', 'puntuacion_personal', 'estado'];
+    public function game()
+    {
+        return $this->belongsTo(Game::class);
+    }
     //
 }

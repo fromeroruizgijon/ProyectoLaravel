@@ -16,14 +16,16 @@ class VideogameFactory extends Factory
      * @return array<string, mixed>
      */
     public function definition(): array
-    {
-        return [
-            'titulo' => $this->faker->sentence(3),
-            'genero' => $this->faker->randomElement(['Accion', 'RPG', 'Aventura', 'Deportes']),
-            'plataforma' => $this->faker->randomElement(['PC', 'PS5', 'Xbox', 'Switch']),
-            'resumen' => $this->faker->paragraph(),
-            'puntuacion_media' => $this->faker->numberBetween(1, 10),
-            'user_id' => \App\Models\User::all()->random()->id ?? \App\Models\User::factory(),
-        ];
-    }
+        {
+            // 1. Primero nos aseguramos de que haya un "Game" global
+            $game = \App\Models\Game::inRandomOrder()->first() ?? \App\Models\Game::factory()->create();
+
+            return [
+                'user_id' => \App\Models\User::all()->random()->id ?? \App\Models\User::factory(),
+                'game_id' => $game->id, // <--- La clave es esta relación
+                'plataforma' => $this->faker->randomElement(['PC', 'PS5', 'Xbox', 'Switch']),
+                'puntuacion_personal' => $this->faker->randomFloat(1, 0, 10),
+                'estado' => $this->faker->randomElement(['Pendiente', 'Jugando', 'Completado', 'Abandonado']),
+            ];
+        }
 }

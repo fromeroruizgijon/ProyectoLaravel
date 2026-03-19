@@ -18,6 +18,9 @@
                     <x-nav-link :href="route('videogames.index')" :active="request()->routeIs('videogames.index')">
                         {{ __('Mi Biblioteca') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('videogames.catalogo')" :active="request()->routeIs('videogames.catalogo')">
+                        {{ __('Catálogo Global') }}
+                    </x-nav-link>
                 </div>
             </div>
 

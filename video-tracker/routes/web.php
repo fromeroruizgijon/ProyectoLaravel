@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VideogameController;
 use App\Models\Videogame;
+use App\Models\Game;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
@@ -19,9 +20,9 @@ Route::get('/dashboard', function () {
         'completados' => Videogame::where('user_id', $user_id)->where('estado', 'Completado')->count(),
     ];
 
-    $ultimosJuegos = Videogame::latest()->take(5)->get();
+    $ultimosJuegosGlobales = Game::latest()->take(5)->get();
     
-    return view('dashboard', compact('ultimosJuegos', 'stats'));
+    return view('dashboard', compact('ultimosJuegosGlobales', 'stats'));
 })->middleware(['auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -34,6 +35,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/catalogo', [VideogameController::class, 'catalogo'])->name('videogames.catalogo');
+    Route::post('/votar/{game_id}', [VideogameController::class, 'votar'])->name('videogames.votar');
 });
 
 require __DIR__.'/auth.php';

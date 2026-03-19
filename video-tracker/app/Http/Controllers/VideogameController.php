@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Videogame;
+use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -10,38 +11,76 @@ class VideogameController extends Controller
 {
     public function index()
     {
-        $videojuegos = Videogame::where('user_id', Auth::id())->get();
-    
+        $videojuegos = Videogame::with('game')->where('user_id', Auth::id())->get();
         return view('biblioteca', compact('videojuegos'));
     }
-    // Muestra el formulario
+
     public function create()
     {
         return view('create');
     }
 
-    // Guarda el juego en la DB
     public function store(Request $request)
     {
-       // 1. Añadimos 'estado' a la validación
-    $validated = $request->validate([
-        'titulo' => 'required|string|max:255',
-        'genero' => 'required|string|max:100',
-        'plataforma' => 'required',
-        'puntuacion_media' => 'required|numeric|min:0|max:10',
-        'estado' => 'required', // <-- AÑADIDO
-    ]);
+        $validated = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'genero' => 'required|string',
+            'plataforma' => 'required',
+            'puntuacion_personal' => 'required|numeric|min:0|max:10',
+            'estado' => 'required',
+            'portada' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
 
-    // 2. Añadimos 'estado' al crear el registro
-    Videogame::create([
-        'titulo'           => $validated['titulo'],
-        'genero'           => $validated['genero'],
-        'plataforma'       => $validated['plataforma'],
-        'puntuacion_media' => $validated['puntuacion_media'],
-        'estado'           => $validated['estado'], // <-- AÑADIDO
-        'user_id'          => Auth::id(),
-    ]);
+        // 1. Buscamos el juego limpiando espacios extra
+        $tituloLimpio = trim($validated['titulo']);
 
-    return redirect()->route('videogames.index')->with('success', '¡Juego añadido!');
+        $game = Game::firstOrCreate(
+            ['titulo' => $tituloLimpio],
+            ['genero' => $validated['genero']]
+        );
+
+        // 2. Si se sube una foto, la guardamos
+        if ($request->hasFile('portada')) {
+            $path = $request->file('portada')->store('portadas', 'public');
+            // Actualizamos la carátula global del juego
+            $game->update(['portada' => $path]);
+        }
+
+        // 3. Guardamos o actualizamos en la biblioteca personal
+        Videogame::updateOrCreate(
+            ['user_id' => Auth::id(), 'game_id' => $game->id],
+            [
+                'plataforma' => $validated['plataforma'],
+                'puntuacion_personal' => $validated['puntuacion_personal'],
+                'estado' => $validated['estado'],
+            ]
+        );
+
+        return redirect()->route('videogames.index')->with('success', '¡Juego gestionado correctamente!');
+    }
+
+    public function catalogo()
+    {
+        $juegosGlobales = Game::paginate(5);
+        return view('catalogo', compact('juegosGlobales'));
+    }
+
+    public function votar(Request $request, $game_id)
+    {
+        $validated = $request->validate([
+            'puntuacion_personal' => 'required|numeric|min:0|max:10',
+            'estado' => 'required'
+        ]);
+
+        Videogame::updateOrCreate(
+            ['user_id' => Auth::id(), 'game_id' => $game_id],
+            [
+                'puntuacion_personal' => $validated['puntuacion_personal'],
+                'estado' => $validated['estado'],
+                'plataforma' => 'PC' 
+            ]
+        );
+
+        return back()->with('success', '¡Voto registrado en tu biblioteca!');
     }
 }

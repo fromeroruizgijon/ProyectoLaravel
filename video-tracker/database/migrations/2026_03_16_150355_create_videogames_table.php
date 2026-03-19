@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('videogames', function (Blueprint $table) {
             $table->id();
-            $table->string('titulo');
-            $table->string('genero');
+                // Relaciones (Los "dueños" del dato)
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('game_id')->constrained()->onDelete('cascade'); // Conecta con la nueva tabla games
+            
+            // Datos personales de TU biblioteca
             $table->string('plataforma');
-            $table->text('resumen')->nullable();
-            $table->integer('puntuacion_media')->default(0);
+            $table->decimal('puntuacion_personal', 3, 1); // Cambiamos el nombre para que no se confunda con la media
             $table->enum('estado', ['Pendiente', 'Jugando', 'Completado', 'Abandonado'])->default('Pendiente');
             $table->timestamps();
         });
