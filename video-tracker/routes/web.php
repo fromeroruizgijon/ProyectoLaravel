@@ -38,6 +38,16 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/catalogo', [VideogameController::class, 'catalogo'])->name('videogames.catalogo');
     Route::post('/votar/{game_id}', [VideogameController::class, 'votar'])->name('videogames.votar');
+
+    // Editar: El formulario y el proceso
+    Route::get('/videojuegos/{id}/editar', [VideogameController::class, 'edit'])->name('videogames.edit');
+    Route::put('/videojuegos/{id}', [VideogameController::class, 'update'])->name('videogames.update');
+
+    // Borrar
+    Route::delete('/videojuegos/{id}', [VideogameController::class, 'destroy'])->name('videogames.destroy');
+
+    // Detalle del juego (Público/Autenticado)
+    Route::get('/juegos/{id}', [VideogameController::class, 'show'])->name('games.show');
 });
 
 require __DIR__.'/auth.php';

@@ -83,4 +83,43 @@ class VideogameController extends Controller
 
         return back()->with('success', '¡Voto registrado en tu biblioteca!');
     }
+
+    // Muestra el formulario de edición
+    public function edit($id)
+    {
+        $videojuego = Videogame::with('game')->where('user_id', Auth::id())->findOrFail($id);
+        return view('edit', compact('videojuego'));
+    }
+
+    // Procesa la actualización
+    public function update(Request $request, $id)
+    {
+        $videojuego = Videogame::where('user_id', Auth::id())->findOrFail($id);
+
+        $validated = $request->validate([
+            'puntuacion_personal' => 'required|numeric|min:0|max:10',
+            'estado' => 'required',
+            'plataforma' => 'required'
+        ]);
+
+        $videojuego->update($validated);
+
+        return redirect()->route('videogames.index')->with('success', '¡Juego actualizado!');
+    }
+
+    // Borra el juego de TU colección
+    public function destroy($id)
+    {
+        $videojuego = Videogame::where('user_id', Auth::id())->findOrFail($id);
+        $videojuego->delete();
+
+        return back()->with('success', 'Juego eliminado de tu biblioteca');
+    }
+    public function show($id)
+    {
+        // Buscamos el juego con sus relaciones
+        $juego = Game::with('videogames.user')->findOrFail($id);
+        
+        return view('show', compact('juego'));
+    }
 }
