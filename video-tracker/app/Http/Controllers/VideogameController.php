@@ -59,9 +59,25 @@ class VideogameController extends Controller
         return redirect()->route('videogames.index')->with('success', '¡Juego gestionado correctamente!');
     }
 
-    public function catalogo()
+    public function catalogo(Request $request)
     {
-        $juegosGlobales = Game::paginate(5);
+        // 1. Recogemos ambos posibles filtros de la URL
+        $buscar = $request->input('search');
+        $genero = $request->input('genero');
+
+        $juegosGlobales = Game::query() // Empezamos una consulta limpia
+            // 2. Si hay texto en el buscador, filtramos por título
+            ->when($buscar, function ($query) use ($buscar) {
+                return $query->where('titulo', 'LIKE', "%{$buscar}%");
+            })
+            // 3. Si se ha seleccionado un género, filtramos por género
+            ->when($genero, function ($query) use ($genero) {
+                return $query->where('genero', $genero);
+            })
+            // 4. Paginamos los resultados (manteniendo los filtros en los enlaces)
+            ->paginate(6)
+            ->withQueryString(); 
+
         return view('catalogo', compact('juegosGlobales'));
     }
 
