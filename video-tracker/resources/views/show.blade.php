@@ -1,60 +1,96 @@
 <x-app-layout>
     <div class="py-12 bg-gray-50 min-h-screen">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white shadow-2xl rounded-3xl p-8 border border-gray-100">
-                <div class="flex flex-col md:flex-row gap-12">
-                    
-                    <div class="w-full md:w-1/3">
-                        <div class="bg-gray-50 p-3 rounded-3xl border border-gray-100 shadow-inner">
-                            @if($juego->portada)
-                                <img src="{{ asset('storage/' . $juego->portada) }}" class="w-full rounded-2xl shadow-lg border border-white">
-                            @else
-                                <div class="w-full aspect-[3/4] bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 font-bold">Sin Imagen</div>
-                            @endif
-                        </div>
-                        
-                        <div class="mt-6 bg-purple-600 p-6 rounded-3xl text-center shadow-lg shadow-purple-200">
-                            <p class="text-[10px] text-purple-100 uppercase font-black tracking-widest">Media Comunidad</p>
-                            <p class="text-6xl font-black text-white leading-none mt-1">{{ number_format($juego->notaMedia(), 1) }}</p>
-                        </div>
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            
+            <div class="bg-white rounded-[3rem] shadow-xl overflow-hidden border border-gray-100 mb-12">
+                <div class="flex flex-col md:flex-row">
+                    <div class="md:w-1/3 bg-gray-100">
+                        @if($juego->portada)
+                            <img src="{{ asset('storage/' . $juego->portada) }}" class="w-full h-full object-cover shadow-2xl">
+                        @else
+                            <div class="flex items-center justify-center h-96 text-gray-400 font-black uppercase italic">Sin Imagen</div>
+                        @endif
                     </div>
 
-                    <div class="w-full md:w-2/3 flex flex-col">
-                        <div class="mb-8">
-                            <span class="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border border-indigo-200">
-                                {{ $juego->genero }}
-                            </span>
-                            <h1 class="text-5xl font-black text-gray-800 mt-4 tracking-tighter italic leading-none">{{ $juego->titulo }}</h1>
-                        </div>
-
-                        <div class="flex-grow">
-                            <h3 class="font-bold text-gray-400 mb-4 text-xs uppercase tracking-widest flex items-center">
-                                <span class="mr-2">👥</span> Usuarios que lo juegan
-                            </h3>
-                            
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                @forelse($juego->videogames as $voto)
-                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                        <div class="flex items-center">
-                                            <div class="w-8 h-8 bg-purple-600 rounded-full mr-3 flex items-center justify-center text-[10px] font-black text-white uppercase italic">
-                                                {{ substr($voto->user->name, 0, 1) }}
-                                            </div>
-                                            <p class="text-sm font-bold text-gray-700">{{ $voto->user->name }}</p>
-                                        </div>
-                                        <span class="font-black text-purple-600">{{ number_format($voto->puntuacion_personal, 1) }}</span>
-                                    </div>
-                                @empty
-                                    <p class="text-gray-400 text-sm italic">Nadie lo ha añadido aún.</p>
-                                @endforelse
+                    <div class="md:w-2/3 p-10 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-purple-600 font-black text-xs uppercase tracking-widest bg-purple-50 px-3 py-1 rounded-lg">{{ $juego->genero }}</span>
+                                    <h2 class="text-5xl font-black text-gray-800 tracking-tighter uppercase italic mt-2">{{ $juego->titulo }}</h2>
+                                </div>
+                                <div class="text-right">
+                                    <span class="block text-4xl font-black text-purple-600">⭐ {{ number_format($juego->notaMedia(), 1) }}</span>
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nota Media Global</span>
+                                </div>
                             </div>
+
+                            <p class="mt-8 text-gray-600 leading-relaxed text-lg">
+                                Bienvenido a la ficha oficial de <span class="font-bold text-gray-800">{{ $juego->titulo }}</span>. Explora los logros, comparte tu opinión con otros jugadores y gestiona tu progreso personal.
+                            </p>
                         </div>
 
-                        <div class="mt-10 pt-6 border-t border-gray-50">
-                            <a href="{{ route('videogames.catalogo') }}" class="text-gray-400 font-bold hover:text-purple-600 transition-colors text-sm">← Volver al catálogo</a>
+                        <div class="mt-10 flex flex-wrap gap-4">
+                            <button class="flex items-center gap-3 bg-gray-900 hover:bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-lg active:scale-95">
+                                <span>🏆</span> Ver Logros del Juego
+                            </button>
+
+                            <a href="{{ route('videogames.catalogo') }}" class="flex items-center gap-3 bg-white border-2 border-gray-100 hover:border-purple-200 text-gray-600 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-sm">
+                                ⬅️ Volver al Catálogo
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="max-w-4xl mx-auto">
+                <div class="flex items-center gap-4 mb-8">
+                    <h3 class="text-2xl font-black text-gray-800 italic uppercase tracking-tighter">
+                        Opiniones de la <span class="text-purple-600">Comunidad</span>
+                    </h3>
+                    <div class="h-[2px] flex-1 bg-gray-100"></div>
+                </div>
+
+                @auth
+                <form action="{{ route('comments.store', $juego->id) }}" method="POST" class="mb-12 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                    @csrf
+                    <textarea name="contenido" rows="3" 
+                        class="w-full border-none bg-gray-50 rounded-2xl focus:ring-2 focus:ring-purple-500 placeholder:text-gray-400 transition-all p-4"
+                        placeholder="Escribe tu reseña o comentario aquí..."></textarea>
+                    
+                    <div class="flex justify-end mt-4">
+                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-black py-3 px-10 rounded-xl shadow-lg shadow-purple-100 transition transform active:scale-95 text-xs uppercase tracking-widest">
+                            Publicar Comentario
+                        </button>
+                    </div>
+                </form>
+                @endauth
+
+                <div class="space-y-6">
+                    @forelse($juego->comments as $comment)
+                    <div class="flex gap-6 p-6 bg-white rounded-[2rem] border border-gray-50 shadow-sm transition-all hover:shadow-md">
+                        <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shrink-0 shadow-lg shadow-purple-100">
+                            {{ substr($comment->user->name, 0, 1) }}
+                        </div>
+                        
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-black text-gray-800 uppercase text-xs tracking-wider">{{ $comment->user->name }}</span>
+                                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{{ $comment->created_at->diffForHumans() }}</span>
+                            </div>
+                            <p class="text-gray-600 leading-relaxed">
+                                {{ $comment->contenido }}
+                            </p>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="text-center py-16 bg-white rounded-[3rem] border-2 border-dashed border-gray-100">
+                        <p class="text-gray-400 font-bold uppercase tracking-widest text-sm">Aún no hay opiniones. ¡Sé el primero!</p>
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+
         </div>
     </div>
 </x-app-layout>

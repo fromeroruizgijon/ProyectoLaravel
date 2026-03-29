@@ -6,6 +6,7 @@ use App\Http\Controllers\VideogameController;
 use App\Models\Videogame;
 use App\Models\Game;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\CommentController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -48,6 +49,8 @@ Route::middleware('auth')->group(function () {
 
     // Detalle del juego (Público/Autenticado)
     Route::get('/juegos/{id}', [VideogameController::class, 'show'])->name('games.show');
+
+    Route::post('/games/{game}/comments', [CommentController::class, 'store'])->name('comments.store')->middleware('auth');
 });
 
 require __DIR__.'/auth.php';

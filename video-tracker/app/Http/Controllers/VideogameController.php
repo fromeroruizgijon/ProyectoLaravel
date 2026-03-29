@@ -134,7 +134,7 @@ class VideogameController extends Controller
     public function show($id)
     {
         // Buscamos el juego con sus relaciones
-        $juego = Game::with('videogames.user')->findOrFail($id);
+        $juego = Game::with(['videogames.user', 'comments.user'])->findOrFail($id);
         
         return view('show', compact('juego'));
     }

@@ -22,4 +22,7 @@ class Game extends Model
         // Accede a la tabla videogames y hace la media de la puntuación
         return $this->videogames()->avg('puntuacion_personal') ?: 0;
     }
+    public function comments() {
+        return $this->hasMany(Comment::class)->latest(); // El latest() es para que los nuevos salgan arriba
+    }
 }
