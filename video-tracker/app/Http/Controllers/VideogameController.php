@@ -7,6 +7,9 @@ use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use Illuminate\Support\Facades\Http;
+use App\Models\Achievement;
+
 class VideogameController extends Controller
 {
     public function index()
@@ -133,9 +136,77 @@ class VideogameController extends Controller
     }
     public function show($id)
     {
-        // Buscamos el juego con sus relaciones
-        $juego = Game::with(['videogames.user', 'comments.user'])->findOrFail($id);
-        
+       // 1. Cargamos el juego con sus comentarios y logros existentes
+        $juego = Game::with(['comments.user', 'achievements'])->findOrFail($id);
+
+        // 2. Si el juego no tiene logros en nuestra BD, intentamos buscarlos fuera
+        if ($juego->achievements->isEmpty()) {
+            try {
+                $token = $this->getIgdbToken();
+
+                if ($token) {
+                    // Buscamos el ID del juego en IGDB (limpiamos el título por si acaso)
+                    $termino = trim($juego->titulo);
+                    
+                    $searchResponse = Http::withHeaders([
+                        'Client-ID' => config('services.igdb.client_id'),
+                        'Authorization' => 'Bearer ' . $token,
+                    ])->withBody("search \"{$termino}\"; fields id; limit 1;", 'text/plain')
+                    ->post('https://api.igdb.com/v4/games');
+
+                    $searchData = $searchResponse->json();
+                    $igdbGameId = $searchData[0]['id'] ?? null;
+
+                    // Si encontramos el juego, pedimos sus logros
+                    if ($igdbGameId) {
+                        $achievementsResponse = Http::withHeaders([
+                            'Client-ID' => config('services.igdb.client_id'),
+                            'Authorization' => 'Bearer ' . $token,
+                        ])->withBody("fields name,description,locked_achievement_icon; where game = {$igdbGameId};", 'text/plain')
+                        ->post('https://api.igdb.com/v4/achievements');
+
+                        $externalAchievements = $achievementsResponse->json();
+
+                        // VALIDACIÓN CLAVE: Solo recorremos si es un array con datos
+                        if (is_array($externalAchievements) && count($externalAchievements) > 0) {
+                            foreach ($externalAchievements as $extAcc) {
+                                Achievement::create([
+                                    'game_id'   => $juego->id,
+                                    'nombre'    => $extAcc['name'] ?? 'Logro oculto',
+                                    'descripcion'=> $extAcc['description'] ?? 'Sin descripción disponible',
+                                    'imagen_url'=> $extAcc['locked_achievement_icon'] ?? null,
+                                ]);
+                            }
+                            // Recargamos la relación ahora que hay datos nuevos
+                            $juego->load('achievements');
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Si algo falla (internet, API caída...), no hacemos nada. 
+                // La página cargará pero con la lista de logros vacía.
+                logger("Error buscando logros: " . $e->getMessage());
+            }
+        }
+
         return view('show', compact('juego'));
+    }
+    private function getIgdbToken()
+    {
+        $response = Http::post('https://id.twitch.tv/oauth2/token', [
+            'client_id' => config('services.igdb.client_id'),
+            'client_secret' => config('services.igdb.client_secret'),
+            'grant_type' => 'client_credentials',
+        ]);
+
+        return $response->json()['access_token'] ?? null;
+    }
+    public function toggleAchievement(Achievement $achievement)
+    {
+        $user = Auth::user();
+        // Usamos la fachada Auth que ya tienes importada arriba
+        $user()->achievements()->toggle($achievement->id);
+        
+        return back();
     }
 }

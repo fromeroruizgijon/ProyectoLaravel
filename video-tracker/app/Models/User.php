@@ -50,4 +50,9 @@ class User extends Authenticatable
         return $this->belongsToMany(Game::class, 'videogames')
                     ->withPivot('plataforma', 'puntuacion_personal', 'estado');
     }
+    public function achievements()
+    {
+        // Relación de muchos a muchos con la tabla pivote
+        return $this->belongsToMany(Achievement::class)->withTimestamps();
+    }
 }

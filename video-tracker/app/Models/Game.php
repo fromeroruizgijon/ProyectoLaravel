@@ -25,4 +25,8 @@ class Game extends Model
     public function comments() {
         return $this->hasMany(Comment::class)->latest(); // El latest() es para que los nuevos salgan arriba
     }
+    public function achievements()
+    {
+        return $this->hasMany(Achievement::class);
+    }
 }

@@ -51,6 +51,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/juegos/{id}', [VideogameController::class, 'show'])->name('games.show');
 
     Route::post('/games/{game}/comments', [CommentController::class, 'store'])->name('comments.store')->middleware('auth');
+
+    Route::post('/achievements/{achievement}/toggle', [VideogameController::class, 'toggleAchievement'])->name('achievements.toggle');
 });
 
 require __DIR__.'/auth.php';
