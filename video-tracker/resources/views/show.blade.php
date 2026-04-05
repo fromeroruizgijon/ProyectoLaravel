@@ -5,10 +5,14 @@
             <div class="bg-white rounded-[3rem] shadow-xl overflow-hidden border border-gray-100 mb-12">
                 <div class="flex flex-col md:flex-row">
                     <div class="md:w-1/3 bg-gray-100">
-                        @if($juego->portada)
+                        @if($juego->portada_url)
+                            <img src="{{ $juego->portada_url }}" class="w-full h-full object-cover shadow-2xl">
+                        @elseif($juego->portada)
                             <img src="{{ asset('storage/' . $juego->portada) }}" class="w-full h-full object-cover shadow-2xl">
                         @else
-                            <div class="flex items-center justify-center h-96 text-gray-400 font-black uppercase italic">Sin Imagen</div>
+                            <div class="flex items-center justify-center h-96 text-gray-400 font-black uppercase italic text-center px-4">
+                                👾 <br> Sin Imagen
+                            </div>
                         @endif
                     </div>
 
@@ -42,8 +46,9 @@
                                     <span class="text-xs font-black text-gray-800">{{ $conseguidos }} / {{ $totalLogros }} ({{ $porcentaje }}%)</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
+                                    {{-- CORRECCIÓN AQUÍ: Concatenamos el % dentro de Blade para evitar errores de sintaxis --}}
                                     <div class="bg-gradient-to-r from-purple-500 to-indigo-600 h-full transition-all duration-500" 
-                                        style="width: <?php echo $porcentaje; ?>%">
+                                        style="width: {{ number_format($porcentaje, 0) }}%;">
                                     </div>
                                 </div>
                             </div>
@@ -66,7 +71,7 @@
                                     @php $esMio = in_array($logro->id, $misLogrosIds); @endphp
                                     <div class="flex items-center justify-between p-4 rounded-3xl border-2 transition-all {{ $esMio ? 'bg-purple-50 border-purple-200 shadow-sm' : 'bg-white border-transparent' }}">
                                         <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 shrink-0 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                                            <div class="w-12 h-12 shrink-0 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-50">
                                                 @if($logro->imagen_url)
                                                     <img src="{{ $logro->imagen_url }}" class="w-full h-full object-cover {{ $esMio ? '' : 'grayscale opacity-50' }}">
                                                 @else
@@ -81,7 +86,7 @@
 
                                         <form action="{{ route('achievements.toggle', $logro->id) }}" method="POST">
                                             @csrf
-                                            <button type="submit" class="p-2 rounded-xl transition-all {{ $esMio ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400 hover:bg-gray-200' }}">
+                                            <button type="submit" class="p-2 rounded-xl transition-all {{ $esMio ? 'bg-purple-600 text-white shadow-md' : 'bg-gray-100 text-gray-400 hover:bg-gray-200' }}">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="{{ $esMio ? 'M5 13l4 4L19 7' : 'M12 4v16m8-8H4' }}" />
                                                 </svg>
@@ -89,7 +94,11 @@
                                         </form>
                                     </div>
                                 @empty
-                                    <p class="col-span-full text-gray-400 italic text-sm text-center py-4">No hay logros disponibles aún.</p>
+                                    <div class="col-span-full py-10 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 text-center">
+                                        <p class="text-gray-400 font-black uppercase tracking-widest text-xs italic">
+                                            No hemos encontrado logros oficiales para este título.
+                                        </p>
+                                    </div>
                                 @endforelse
                             </div>
                         </div>
@@ -109,7 +118,7 @@
                 <form action="{{ route('comments.store', $juego->id) }}" method="POST" class="mb-12 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
                     @csrf
                     <textarea name="contenido" rows="3" 
-                        class="w-full border-none bg-gray-50 rounded-2xl focus:ring-2 focus:ring-purple-500 placeholder:text-gray-400 transition-all p-4"
+                        class="w-full border-none bg-gray-50 rounded-2xl focus:ring-2 focus:ring-purple-500 placeholder:text-gray-400 transition-all p-4 font-bold"
                         placeholder="Escribe tu reseña o comentario aquí..."></textarea>
                     
                     <div class="flex justify-end mt-4">
@@ -132,14 +141,14 @@
                                 <span class="font-black text-gray-800 uppercase text-xs tracking-wider">{{ $comment->user->name }}</span>
                                 <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{{ $comment->created_at->diffForHumans() }}</span>
                             </div>
-                            <p class="text-gray-600 leading-relaxed">
+                            <p class="text-gray-600 leading-relaxed font-medium">
                                 {{ $comment->contenido }}
                             </p>
                         </div>
                     </div>
                     @empty
                     <div class="text-center py-16 bg-white rounded-[3rem] border-2 border-dashed border-gray-100">
-                        <p class="text-gray-400 font-bold uppercase tracking-widest text-sm">Aún no hay opiniones. ¡Sé el primero!</p>
+                        <p class="text-gray-400 font-bold uppercase tracking-widest text-sm italic">Aún no hay opiniones. ¡Sé el primero!</p>
                     </div>
                     @endforelse
                 </div>

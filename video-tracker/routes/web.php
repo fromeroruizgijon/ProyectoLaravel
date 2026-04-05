@@ -53,6 +53,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/games/{game}/comments', [CommentController::class, 'store'])->name('comments.store')->middleware('auth');
 
     Route::post('/achievements/{achievement}/toggle', [VideogameController::class, 'toggleAchievement'])->name('achievements.toggle');
-});
+
+    Route::get('/api/search-igdb', [VideogameController::class, 'searchIgdb'])->name('api.search.igdb');
+    });
 
 require __DIR__.'/auth.php';

@@ -52,7 +52,6 @@ class User extends Authenticatable
     }
     public function achievements()
     {
-        // Relación de muchos a muchos con la tabla pivote
         return $this->belongsToMany(Achievement::class)->withTimestamps();
     }
 }

@@ -7,21 +7,71 @@
 
     <div class="py-12 bg-gray-50 min-h-screen">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100">
+            <div class="bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100"
+                 x-data="{ 
+                    search: '', 
+                    results: [], 
+                    selectedGame: null,
+                    async fetchGames() {
+                        if(this.search.length < 3) { this.results = []; return; }
+                        const r = await fetch(`/api/search-igdb?q=${this.search}`);
+                        this.results = await r.json();
+                    },
+                    selectGame(game) {
+                        this.selectedGame = game;
+                        this.search = game.name;
+                        this.results = [];
+                        // Rellenamos los campos ocultos y visibles
+                        document.getElementById('real_titulo').value = game.name;
+                        document.getElementById('genero_select').value = game.genre;
+                        document.getElementById('portada_url_hidden').value = game.cover;
+                        // NUEVA LÍNEA: Guardamos el ID oficial de IGDB
+                        document.getElementById('igdb_id_hidden').value = game.id;
+                    }
+                 }">
                 
                 <form action="{{ route('videogames.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                     @csrf 
 
-                    <div>
-                        <label class="block font-black text-xs uppercase tracking-widest text-indigo-600 mb-2">Título del Videojuego</label>
-                        <input type="text" name="titulo" class="w-full rounded-xl bg-gray-50 border-gray-200 text-gray-800 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm py-3 font-bold" placeholder="Ej: Elden Ring" required>
-                        <p class="text-[10px] text-gray-400 mt-2 uppercase font-bold tracking-tighter">Nota: Si el juego ya existe, se usará la ficha global y se añadirá a tu lista.</p>
+                    <div class="relative">
+                        <label class="block font-black text-xs uppercase tracking-widest text-indigo-600 mb-2">Buscar Videojuego (API IGDB)</label>
+                        <input type="text" 
+                               x-model="search" 
+                               @input.debounce.500ms="fetchGames()"
+                               class="w-full rounded-xl bg-gray-50 border-gray-200 text-gray-800 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm py-4 font-bold" 
+                               placeholder="Empieza a escribir para buscar..." autocomplete="off">
+                        
+                        <div x-show="results.length > 0" class="absolute z-50 w-full bg-white mt-2 rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                            <template x-for="game in results">
+                                <div @click="selectGame(game)" class="flex items-center gap-4 p-4 hover:bg-indigo-50 cursor-pointer transition-all border-b border-gray-50">
+                                    <img :src="game.cover" class="w-10 h-14 object-cover rounded-lg shadow-sm bg-gray-200">
+                                    <div>
+                                        <p class="font-black text-gray-800 text-sm" x-text="game.name"></p>
+                                        <p class="text-[10px] text-indigo-600 font-bold uppercase" x-text="game.genre"></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <input type="hidden" name="titulo" id="real_titulo" required>
+                        <input type="hidden" name="portada_url" id="portada_url_hidden">
+                        <input type="hidden" name="igdb_id" id="igdb_id_hidden">
                     </div>
+
+                    <template x-if="selectedGame">
+                        <div class="flex items-center gap-4 p-4 bg-green-50 rounded-2xl border border-green-100 animate-pulse">
+                            <img :src="selectedGame.cover" class="w-12 h-16 object-cover rounded-lg shadow-md">
+                            <div>
+                                <p class="text-[10px] font-black text-green-600 uppercase tracking-widest">Juego Seleccionado</p>
+                                <p class="font-black text-gray-800 italic" x-text="selectedGame.name"></p>
+                            </div>
+                        </div>
+                    </template>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block font-black text-xs uppercase tracking-widest text-gray-500 mb-2">Género</label>
-                            <select name="genero" class="w-full rounded-xl bg-gray-50 border-gray-200 text-gray-700 font-bold text-sm py-3" required>
+                            <select name="genero" id="genero_select" class="w-full rounded-xl bg-gray-50 border-gray-200 text-gray-700 font-bold text-sm py-3" required>
                                 <option value="" disabled selected>Selecciona categoría</option>
                                 <option value="Acción">Acción</option>
                                 <option value="Aventura">Aventura</option>
@@ -34,6 +84,7 @@
                                 <option value="Lucha">Lucha</option>
                                 <option value="Simulación">Simulación</option>
                                 <option value="Indie">Indie</option>
+                                <option value="Otros">Otros</option>
                             </select>
                         </div>
 
@@ -67,15 +118,15 @@
                         </div>
                     </div>
 
-                    <div class="p-6 bg-indigo-50 rounded-2xl border-2 border-dashed border-indigo-100 text-center">
-                        <label class="block font-black text-xs uppercase tracking-widest text-indigo-600 mb-3 text-center">Imagen de Portada</label>
-                        <input type="file" name="portada" accept="image/*" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                    <div class="p-6 bg-indigo-50 rounded-2xl border-2 border-dashed border-indigo-100">
+                        <label class="block font-black text-xs uppercase tracking-widest text-indigo-600 mb-3 text-center">O sube tu propia carátula</label>
+                        <input type="file" name="portada" accept="image/*" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer block w-full">
                     </div>
 
                     <div class="flex items-center justify-center gap-6 pt-6">
                         <a href="{{ route('videogames.index') }}" class="text-xs font-black uppercase text-gray-400 hover:text-gray-600">Volver</a>
                         <button type="submit" class="px-12 py-4 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-xl shadow-lg shadow-purple-200 transition transform active:scale-95 uppercase text-xs tracking-widest">
-                            Registrar en Base de Datos
+                            Registrar en mi Biblioteca
                         </button>
                     </div>
                 </form>

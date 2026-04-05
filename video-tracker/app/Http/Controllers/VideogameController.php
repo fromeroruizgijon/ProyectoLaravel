@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Videogame;
 use App\Models\Game;
+use App\Models\Achievement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
 use Illuminate\Support\Facades\Http;
-use App\Models\Achievement;
+use Illuminate\Support\Facades\Log; // Importante para debuguear
 
 class VideogameController extends Controller
 {
@@ -26,30 +26,29 @@ class VideogameController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'titulo' => 'required|string|max:255',
+            'titulo' => 'required|string',
             'genero' => 'required|string',
             'plataforma' => 'required',
             'puntuacion_personal' => 'required|numeric|min:0|max:10',
             'estado' => 'required',
-            'portada' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'portada' => 'nullable|image|max:2048',
+            'portada_url' => 'nullable|string',
         ]);
 
-        // 1. Buscamos el juego limpiando espacios extra
-        $tituloLimpio = trim($validated['titulo']);
-
         $game = Game::firstOrCreate(
-            ['titulo' => $tituloLimpio],
-            ['genero' => $validated['genero']]
+            ['titulo' => $validated['titulo']],
+            [
+                'genero' => $validated['genero'],
+                'portada_url' => $request->portada_url,
+                'igdb_id' => $request->igdb_id
+            ]
         );
 
-        // 2. Si se sube una foto, la guardamos
         if ($request->hasFile('portada')) {
             $path = $request->file('portada')->store('portadas', 'public');
-            // Actualizamos la carátula global del juego
             $game->update(['portada' => $path]);
         }
 
-        // 3. Guardamos o actualizamos en la biblioteca personal
         Videogame::updateOrCreate(
             ['user_id' => Auth::id(), 'game_id' => $game->id],
             [
@@ -59,25 +58,21 @@ class VideogameController extends Controller
             ]
         );
 
-        return redirect()->route('videogames.index')->with('success', '¡Juego gestionado correctamente!');
+        return redirect()->route('videogames.index')->with('success', '¡Juego añadido!');
     }
 
     public function catalogo(Request $request)
     {
-        // 1. Recogemos ambos posibles filtros de la URL
         $buscar = $request->input('search');
         $genero = $request->input('genero');
 
-        $juegosGlobales = Game::query() // Empezamos una consulta limpia
-            // 2. Si hay texto en el buscador, filtramos por título
+        $juegosGlobales = Game::query()
             ->when($buscar, function ($query) use ($buscar) {
                 return $query->where('titulo', 'LIKE', "%{$buscar}%");
             })
-            // 3. Si se ha seleccionado un género, filtramos por género
             ->when($genero, function ($query) use ($genero) {
                 return $query->where('genero', $genero);
             })
-            // 4. Paginamos los resultados (manteniendo los filtros en los enlaces)
             ->paginate(6)
             ->withQueryString(); 
 
@@ -103,94 +98,89 @@ class VideogameController extends Controller
         return back()->with('success', '¡Voto registrado en tu biblioteca!');
     }
 
-    // Muestra el formulario de edición
     public function edit($id)
     {
         $videojuego = Videogame::with('game')->where('user_id', Auth::id())->findOrFail($id);
         return view('edit', compact('videojuego'));
     }
 
-    // Procesa la actualización
     public function update(Request $request, $id)
     {
         $videojuego = Videogame::where('user_id', Auth::id())->findOrFail($id);
-
         $validated = $request->validate([
             'puntuacion_personal' => 'required|numeric|min:0|max:10',
             'estado' => 'required',
             'plataforma' => 'required'
         ]);
-
         $videojuego->update($validated);
-
         return redirect()->route('videogames.index')->with('success', '¡Juego actualizado!');
     }
 
-    // Borra el juego de TU colección
     public function destroy($id)
     {
         $videojuego = Videogame::where('user_id', Auth::id())->findOrFail($id);
         $videojuego->delete();
-
         return back()->with('success', 'Juego eliminado de tu biblioteca');
     }
+
     public function show($id)
-    {
-       // 1. Cargamos el juego con sus comentarios y logros existentes
+   {
+        // 1. Cargamos el juego
         $juego = Game::with(['comments.user', 'achievements'])->findOrFail($id);
 
-        // 2. Si el juego no tiene logros en nuestra BD, intentamos buscarlos fuera
+        // 2. Si no hay logros, intentamos traerlos
         if ($juego->achievements->isEmpty()) {
             try {
                 $token = $this->getIgdbToken();
-
                 if ($token) {
-                    // Buscamos el ID del juego en IGDB (limpiamos el título por si acaso)
-                    $termino = trim($juego->titulo);
-                    
-                    $searchResponse = Http::withHeaders([
-                        'Client-ID' => config('services.igdb.client_id'),
-                        'Authorization' => 'Bearer ' . $token,
-                    ])->withBody("search \"{$termino}\"; fields id; limit 1;", 'text/plain')
-                    ->post('https://api.igdb.com/v4/games');
+                    // Prioridad 1: Usar el IGDB_ID que guardamos al crear
+                    // Prioridad 2: Si no hay ID, buscar el ID por el nombre (fallback)
+                    $igdbId = $juego->igdb_id;
 
-                    $searchData = $searchResponse->json();
-                    $igdbGameId = $searchData[0]['id'] ?? null;
-
-                    // Si encontramos el juego, pedimos sus logros
-                    if ($igdbGameId) {
-                        $achievementsResponse = Http::withHeaders([
+                    if (!$igdbId) {
+                        $search = Http::withHeaders([
                             'Client-ID' => config('services.igdb.client_id'),
                             'Authorization' => 'Bearer ' . $token,
-                        ])->withBody("fields name,description,locked_achievement_icon; where game = {$igdbGameId};", 'text/plain')
+                        ])->withBody("fields id; where name = \"{$juego->titulo}\";", 'text/plain')
+                        ->post('https://api.igdb.com/v4/games');
+                        
+                        $igdbId = $search->json()[0]['id'] ?? null;
+                    }
+
+                    if ($igdbId) {
+                        // Pedimos los logros
+                        $response = Http::withHeaders([
+                            'Client-ID' => config('services.igdb.client_id'),
+                            'Authorization' => 'Bearer ' . $token,
+                        ])->withBody("fields name,description,locked_achievement_icon; where game = {$igdbId}; limit 100;", 'text/plain')
                         ->post('https://api.igdb.com/v4/achievements');
 
-                        $externalAchievements = $achievementsResponse->json();
+                        $external = $response->json();
 
-                        // VALIDACIÓN CLAVE: Solo recorremos si es un array con datos
-                        if (is_array($externalAchievements) && count($externalAchievements) > 0) {
-                            foreach ($externalAchievements as $extAcc) {
+                        if (is_array($external) && count($external) > 0) {
+                            foreach ($external as $extAcc) {
                                 Achievement::create([
-                                    'game_id'   => $juego->id,
-                                    'nombre'    => $extAcc['name'] ?? 'Logro oculto',
-                                    'descripcion'=> $extAcc['description'] ?? 'Sin descripción disponible',
-                                    'imagen_url'=> $extAcc['locked_achievement_icon'] ?? null,
+                                    'game_id'     => $juego->id,
+                                    'nombre'      => $extAcc['name'] ?? 'Logro',
+                                    'descripcion' => $extAcc['description'] ?? 'Sin descripción',
+                                    'imagen_url'  => isset($extAcc['locked_achievement_icon']) 
+                                        ? "https:" . $extAcc['locked_achievement_icon'] 
+                                        : null,
                                 ]);
                             }
-                            // Recargamos la relación ahora que hay datos nuevos
-                            $juego->load('achievements');
+                            // Recargamos los datos para que el Blade los vea
+                            $juego = $juego->fresh('achievements');
                         }
                     }
                 }
             } catch (\Exception $e) {
-                // Si algo falla (internet, API caída...), no hacemos nada. 
-                // La página cargará pero con la lista de logros vacía.
-                logger("Error buscando logros: " . $e->getMessage());
+                logger()->error("Fallo descargando logros: " . $e->getMessage());
             }
         }
 
         return view('show', compact('juego'));
     }
+
     private function getIgdbToken()
     {
         $response = Http::post('https://id.twitch.tv/oauth2/token', [
@@ -201,12 +191,43 @@ class VideogameController extends Controller
 
         return $response->json()['access_token'] ?? null;
     }
-    public function toggleAchievement(Achievement $achievement)
+
+    public function toggleAchievement($id)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        // Usamos la fachada Auth que ya tienes importada arriba
-        $user()->achievements()->toggle($achievement->id);
-        
+
+        if ($user) {
+            $user->achievements()->toggle($id);
+        }
+
         return back();
+    }
+
+    public function searchIgdb(Request $request)
+    {
+        $search = $request->query('q');
+        $token = $this->getIgdbToken();
+
+        if (!$token || strlen($search) < 3) return response()->json([]);
+
+        $response = Http::withHeaders([
+            'Client-ID' => config('services.igdb.client_id'),
+            'Authorization' => 'Bearer ' . $token,
+        ])->withBody("search \"{$search}\"; fields name, cover.url, genres.name, id; limit 5;", 'text/plain')
+        ->post('https://api.igdb.com/v4/games');
+
+        $games = collect($response->json())->map(function($game) {
+            return [
+                'name' => $game['name'],
+                'id' => $game['id'],
+                'cover' => isset($game['cover']['url']) 
+                    ? str_replace('t_thumb', 't_cover_big', "https:" . $game['cover']['url']) 
+                    : null,
+                'genre' => $game['genres'][0]['name'] ?? 'Otros'
+            ];
+        });
+
+        return response()->json($games);
     }
 }

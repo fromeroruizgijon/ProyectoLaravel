@@ -10,7 +10,7 @@ class Game extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['titulo', 'genero', 'portada'];
+    protected $fillable = ['titulo', 'genero', 'portada', 'portada_url', 'igdb_id'];
 
     // Un juego global tiene muchas entradas en las bibliotecas de los usuarios
     public function videogames()

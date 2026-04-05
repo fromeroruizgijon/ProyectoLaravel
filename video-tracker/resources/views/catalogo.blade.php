@@ -32,13 +32,13 @@
                 
                 <a href="{{ route('videogames.catalogo', ['search' => request('search')]) }}" 
                    class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all {{ !request('genero') ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-gray-500 border border-gray-100 hover:bg-purple-50' }}">
-                   Todos
+                    Todos
                 </a>
 
                 @foreach($categorias as $cat)
                     <a href="{{ route('videogames.catalogo', ['genero' => $cat, 'search' => request('search')]) }}" 
                        class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all {{ request('genero') == $cat ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-gray-500 border border-gray-100 hover:bg-purple-50' }}">
-                       {{ $cat }}
+                        {{ $cat }}
                     </a>
                 @endforeach
             </div>
@@ -55,10 +55,13 @@
                     <div class="juego-card bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col items-center hover:shadow-xl hover:border-purple-200 transition-all duration-300">
                         
                         <div class="w-32 h-44 mb-4">
-                            @if($game->portada)
+                            {{-- PRIORIDAD DE IMAGEN: 1. API URL -> 2. STORAGE LOCAL -> 3. PLACEHOLDER --}}
+                            @if($game->portada_url)
+                                <img src="{{ $game->portada_url }}" class="w-full h-full object-cover rounded-2xl shadow-md border border-gray-100">
+                            @elseif($game->portada)
                                 <img src="{{ asset('storage/' . $game->portada) }}" class="w-full h-full object-cover rounded-2xl shadow-md border border-gray-100">
                             @else
-                                <div class="w-full h-full bg-gray-100 rounded-2xl flex items-center justify-center text-[10px] text-gray-400 font-bold uppercase border border-gray-200">Sin foto</div>
+                                <div class="w-full h-full bg-gray-100 rounded-2xl flex items-center justify-center text-[10px] text-gray-400 font-bold uppercase border border-gray-200 text-center px-2">Sin foto</div>
                             @endif
                         </div>
 
@@ -76,7 +79,7 @@
                             <div class="flex flex-col gap-2">
                                 <div class="flex gap-2">
                                     <input type="number" name="puntuacion_personal" step="0.1" min="0" max="10" placeholder="Nota" 
-                                           class="w-1/3 bg-gray-50 border-gray-200 rounded-xl text-sm focus:ring-purple-500 py-2" required>
+                                           class="w-1/3 bg-gray-50 border-gray-200 rounded-xl text-sm focus:ring-purple-500 py-2 font-bold" required>
                                     
                                     <select name="estado" class="w-2/3 bg-gray-50 border-gray-200 rounded-xl text-[10px] font-bold uppercase focus:ring-purple-500 py-2">
                                         <option value="Pendiente">Pendiente</option>
@@ -103,7 +106,7 @@
 
     <script>
         const input = document.getElementById('search-input');
-        if (input.value.length > 0) {
+        if (input && input.value.length > 0) {
             input.focus();
             const val = input.value;
             input.value = '';

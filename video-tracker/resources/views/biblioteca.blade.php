@@ -50,10 +50,13 @@
                         @foreach ($videojuegos as $juego)
                         <tr class="fila-juego hover:bg-purple-50/50 transition-colors duration-200 text-gray-700" data-estado="{{ $juego->estado }}">
                             <td class="px-6 py-4 text-center">
-                                @if($juego->game->portada)
-                                    <img src="{{ asset('storage/' . $juego->game->portada) }}" class="w-12 h-16 object-cover rounded-lg shadow-sm border border-gray-200">
+                                {{-- PRIORIDAD DE IMAGEN: API -> LOCAL -> NADA --}}
+                                @if($juego->game->portada_url)
+                                    <img src="{{ $juego->game->portada_url }}" class="w-12 h-16 object-cover rounded-lg shadow-sm border border-gray-200 mx-auto">
+                                @elseif($juego->game->portada)
+                                    <img src="{{ asset('storage/' . $juego->game->portada) }}" class="w-12 h-16 object-cover rounded-lg shadow-sm border border-gray-200 mx-auto">
                                 @else
-                                    <div class="w-12 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-[10px] text-gray-400 border border-gray-200 uppercase font-bold text-center">Sin imagen</div>
+                                    <div class="w-12 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-[10px] text-gray-400 border border-gray-200 uppercase font-bold text-center mx-auto">Sin imagen</div>
                                 @endif
                             </td>
                             <td class="px-6 py-4 font-bold text-gray-800 italic">
@@ -105,7 +108,6 @@
             const filas = document.querySelectorAll('.fila-juego');
             const botones = document.querySelectorAll('.filter-btn');
 
-            // Cambiar estilos de botones
             botones.forEach(b => {
                 b.classList.remove('bg-purple-600', 'text-white', 'shadow-md');
                 b.classList.add('bg-white', 'text-gray-600', 'border', 'border-gray-100');
@@ -113,7 +115,6 @@
             btn.classList.add('bg-purple-600', 'text-white', 'shadow-md');
             btn.classList.remove('bg-white', 'text-gray-600', 'border', 'border-gray-100');
 
-            // Filtrar filas
             filas.forEach(fila => {
                 if (estado === 'todos' || fila.getAttribute('data-estado') === estado) {
                     fila.style.display = '';
