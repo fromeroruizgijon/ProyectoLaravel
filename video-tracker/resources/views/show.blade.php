@@ -46,9 +46,8 @@
                                     <span class="text-xs font-black text-gray-800">{{ $conseguidos }} / {{ $totalLogros }} ({{ $porcentaje }}%)</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
-                                    {{-- CORRECCIÓN AQUÍ: Concatenamos el % dentro de Blade para evitar errores de sintaxis --}}
                                     <div class="bg-gradient-to-r from-purple-500 to-indigo-600 h-full transition-all duration-500" 
-                                        style="width: {{ number_format($porcentaje, 0) }}%;">
+                                         style="width: <?php echo $porcentaje; ?>%;">
                                     </div>
                                 </div>
                             </div>
@@ -96,7 +95,7 @@
                                 @empty
                                     <div class="col-span-full py-10 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 text-center">
                                         <p class="text-gray-400 font-black uppercase tracking-widest text-xs italic">
-                                            No hemos encontrado logros oficiales para este título.
+                                            No hay logros disponibles para este título.
                                         </p>
                                     </div>
                                 @endforelse

@@ -8,7 +8,6 @@ use App\Models\Achievement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log; // Importante para debuguear
 
 class VideogameController extends Controller
 {
@@ -33,6 +32,7 @@ class VideogameController extends Controller
             'estado' => 'required',
             'portada' => 'nullable|image|max:2048',
             'portada_url' => 'nullable|string',
+            'igdb_id' => 'nullable|integer',
         ]);
 
         $game = Game::firstOrCreate(
@@ -124,58 +124,35 @@ class VideogameController extends Controller
     }
 
     public function show($id)
-   {
-        // 1. Cargamos el juego
+    {
         $juego = Game::with(['comments.user', 'achievements'])->findOrFail($id);
 
-        // 2. Si no hay logros, intentamos traerlos
+        // Sistema de 20 Logros Automáticos
         if ($juego->achievements->isEmpty()) {
-            try {
-                $token = $this->getIgdbToken();
-                if ($token) {
-                    // Prioridad 1: Usar el IGDB_ID que guardamos al crear
-                    // Prioridad 2: Si no hay ID, buscar el ID por el nombre (fallback)
-                    $igdbId = $juego->igdb_id;
+            $tipos = ['Bronce', 'Plata', 'Oro', 'Platino'];
+            
+            for ($i = 1; $i <= 20; $i++) {
+                // Determinamos la dificultad/tipo según el número
+                $tipo = $tipos[($i - 1) % 4]; 
+                
+                // Nombres dinámicos para que no sean todos iguales
+                $nombre = match(true) {
+                    $i === 1  => "Bienvenido a " . $juego->titulo,
+                    $i === 10 => "Mitad del Camino",
+                    $i === 20 => "Leyenda de " . $juego->titulo,
+                    $i % 5 === 0 => "Desafío Especial Nivel " . ($i / 5),
+                    default => "Logro de " . $tipo . " #" . $i
+                };
 
-                    if (!$igdbId) {
-                        $search = Http::withHeaders([
-                            'Client-ID' => config('services.igdb.client_id'),
-                            'Authorization' => 'Bearer ' . $token,
-                        ])->withBody("fields id; where name = \"{$juego->titulo}\";", 'text/plain')
-                        ->post('https://api.igdb.com/v4/games');
-                        
-                        $igdbId = $search->json()[0]['id'] ?? null;
-                    }
-
-                    if ($igdbId) {
-                        // Pedimos los logros
-                        $response = Http::withHeaders([
-                            'Client-ID' => config('services.igdb.client_id'),
-                            'Authorization' => 'Bearer ' . $token,
-                        ])->withBody("fields name,description,locked_achievement_icon; where game = {$igdbId}; limit 100;", 'text/plain')
-                        ->post('https://api.igdb.com/v4/achievements');
-
-                        $external = $response->json();
-
-                        if (is_array($external) && count($external) > 0) {
-                            foreach ($external as $extAcc) {
-                                Achievement::create([
-                                    'game_id'     => $juego->id,
-                                    'nombre'      => $extAcc['name'] ?? 'Logro',
-                                    'descripcion' => $extAcc['description'] ?? 'Sin descripción',
-                                    'imagen_url'  => isset($extAcc['locked_achievement_icon']) 
-                                        ? "https:" . $extAcc['locked_achievement_icon'] 
-                                        : null,
-                                ]);
-                            }
-                            // Recargamos los datos para que el Blade los vea
-                            $juego = $juego->fresh('achievements');
-                        }
-                    }
-                }
-            } catch (\Exception $e) {
-                logger()->error("Fallo descargando logros: " . $e->getMessage());
+                Achievement::create([
+                    'game_id'     => $juego->id,
+                    'nombre'      => $nombre,
+                    'descripcion' => "Has desbloqueado el desafío número {$i} en la categoría {$tipo}.",
+                    'imagen_url'  => 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png',
+                ]);
             }
+            // Recargamos la relación para que el conteo en el Blade sea 20
+            $juego = $juego->fresh('achievements');
         }
 
         return view('show', compact('juego'));

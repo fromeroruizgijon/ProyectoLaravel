@@ -5,22 +5,15 @@ namespace Database\Factories;
 use App\Models\Game;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Game>
- */
 class GameFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-        'titulo' => $this->faker->unique()->sentence(3),
-        'genero' => $this->faker->randomElement(['RPG', 'Acción', 'Aventura', 'Shooter']),
-        'portada' => null, // Las imágenes del factory son complicadas, mejor dejarlas vacías
-    ];
+            'titulo' => $this->faker->unique()->words(3, true),
+            'genero' => $this->faker->randomElement(['RPG', 'Acción', 'Aventura', 'Shooter', 'Terror', 'Indie']),
+            'portada_url' => 'https://placehold.co/600x800?text=Game+Cover',
+            'igdb_id' => $this->faker->unique()->numberBetween(100, 999999),
+        ];
     }
 }
