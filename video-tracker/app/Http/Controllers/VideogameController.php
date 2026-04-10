@@ -35,12 +35,14 @@ class VideogameController extends Controller
             'igdb_id' => 'nullable|integer',
         ]);
 
+        $igdbId = $request->igdb_id ?? 0;
+
         $game = Game::firstOrCreate(
             ['titulo' => $validated['titulo']],
             [
                 'genero' => $validated['genero'],
                 'portada_url' => $request->portada_url,
-                'igdb_id' => $request->igdb_id
+                'igdb_id' => $igdbId
             ]
         );
 
