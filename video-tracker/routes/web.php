@@ -57,4 +57,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/search-igdb', [VideogameController::class, 'searchIgdb'])->name('api.search.igdb');
     });
 
+    Route::middleware(['auth', 'game.owner'])->group(function () {
+    Route::get('/videojuegos/{id}/edit', [VideogameController::class, 'edit'])->name('videogames.edit');
+    Route::put('/videojuegos/{id}', [VideogameController::class, 'update'])->name('videogames.update');
+    Route::delete('/videojuegos/{id}', [VideogameController::class, 'destroy'])->name('videogames.destroy');
+});
+
 require __DIR__.'/auth.php';

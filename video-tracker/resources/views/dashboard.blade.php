@@ -34,7 +34,10 @@
                             <div class="group flex items-center justify-between p-5 bg-gray-50 rounded-2xl border border-transparent hover:border-purple-200 hover:bg-white hover:shadow-md transition-all">
                                 <div class="flex items-center">
                                     <div class="w-14 h-20 mr-6 flex-shrink-0">
-                                        @if($juego->portada)
+                                        {{-- LÓGICA DE IMAGEN CORREGIDA --}}
+                                        @if($juego->portada_url)
+                                            <img src="{{ $juego->portada_url }}" class="w-full h-full object-cover rounded-xl border border-gray-100 shadow-sm">
+                                        @elseif($juego->portada)
                                             <img src="{{ asset('storage/' . $juego->portada) }}" class="w-full h-full object-cover rounded-xl border border-gray-100 shadow-sm">
                                         @else
                                             <div class="w-full h-full bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center font-black text-xl border border-purple-200 uppercase italic">
@@ -53,7 +56,7 @@
 
                                 <div class="text-right">
                                     <span class="text-2xl font-black text-indigo-600 italic">
-                                        {{ number_format($juego->notaMedia(), 1) }}
+                                        {{ number_format($juego->notaMedia() ?? 0, 1) }}
                                     </span>
                                     <p class="text-[9px] text-gray-400 uppercase font-black mt-1">Nota Media</p>
                                 </div>
