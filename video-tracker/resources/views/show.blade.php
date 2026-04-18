@@ -38,6 +38,10 @@
                                 $misLogrosIds = auth()->user()->achievements->pluck('id')->toArray();
                                 $conseguidos = $juego->achievements->whereIn('id', $misLogrosIds)->count();
                                 $porcentaje = $totalLogros > 0 ? round(($conseguidos / $totalLogros) * 100) : 0;
+                                
+                                // NUEVO: Comprobamos si el usuario tiene este juego en su colección
+                                $misJuegosIds = auth()->user()->games->pluck('id')->toArray();
+                                $loTengoEnBiblioteca = in_array($juego->id, $misJuegosIds);
                             @endphp
 
                             <div class="mt-8 bg-white p-6 rounded-[2.5rem] border border-purple-100 shadow-sm relative overflow-hidden">
@@ -103,14 +107,25 @@
                                             </div>
                                         </div>
 
-                                        <form action="{{ route('achievements.toggle', $logro->id) }}" method="POST">
-                                            @csrf
-                                            <button type="submit" class="p-3 rounded-2xl {{ $esMio ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-300 border border-gray-100' }}">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="{{ $esMio ? 'M5 13l4 4L19 7' : 'M12 4v16m8-8H4' }}" />
+                                        {{-- NUEVO: Mostramos el botón SOLO si el juego está en la biblioteca --}}
+                                        @if($loTengoEnBiblioteca)
+                                            <form action="{{ route('achievements.toggle', $logro->id) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="p-3 rounded-2xl {{ $esMio ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-300 border border-gray-100 hover:text-purple-500' }} transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="{{ $esMio ? 'M5 13l4 4L19 7' : 'M12 4v16m8-8H4' }}" />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        @else
+                                            {{-- Si no lo tiene, mostramos un candado --}}
+                                            <div class="p-3 text-gray-300" title="Añade el juego a tu colección para marcar logros">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                                                 </svg>
-                                            </button>
-                                        </form>
+                                            </div>
+                                        @endif
+
                                     </div>
                                 @empty
                                     <p class="text-center col-span-full text-gray-400 font-black uppercase text-xs py-10">Sin logros.</p>
