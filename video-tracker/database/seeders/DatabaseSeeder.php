@@ -12,21 +12,19 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Creamos tu usuario de prueba
+        //crea un usuario de prueba
         $user = User::factory()->create([
             'name' => 'Usuario Prueba',
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
         ]);
 
-        // 2. Creamos 10 juegos globales
-        // Usamos 'has' para decirle: "Cada juego tiene 20 logros"
+        // crea 10 juegos con 20 logros
         $juegosGlobales = Game::factory(10)
             ->has(Achievement::factory()->count(20), 'achievements')
             ->create();
 
-        // 3. Rellenamos la biblioteca personal del usuario
-        // Vinculamos al usuario con esos juegos globales
+        // relaciona los juegos creados al usuario 
         foreach ($juegosGlobales as $juego) {
             Videogame::create([
                 'user_id' => $user->id,
