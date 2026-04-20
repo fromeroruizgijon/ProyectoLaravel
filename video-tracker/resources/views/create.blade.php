@@ -25,21 +25,38 @@
                         document.getElementById('real_titulo').value = game.name;
                         document.getElementById('genero_select').value = game.genre;
                         document.getElementById('portada_url_hidden').value = game.cover;
-                        // NUEVA LÍNEA: Guardamos el ID oficial de IGDB
+                        // Guardamos el ID oficial de IGDB
                         document.getElementById('igdb_id_hidden').value = game.id;
                     }
                  }">
                 
+                {{-- NUEVO: Bloque de Errores de Validación --}}
+                @if ($errors->any())
+                    <div class="mb-8 p-6 bg-red-50 border border-red-200 text-red-700 rounded-2xl shadow-sm">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-xl">⚠️</span>
+                            <h3 class="font-black text-sm uppercase tracking-widest">Revisa los siguientes errores:</h3>
+                        </div>
+                        <ul class="list-disc list-inside text-sm font-bold opacity-80">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <form action="{{ route('videogames.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                     @csrf 
 
                     <div class="relative">
-                        <label class="block font-black text-xs uppercase tracking-widest text-indigo-600 mb-2">Buscar Videojuego (API IGDB)</label>
+                        <label class="block font-black text-xs uppercase tracking-widest text-indigo-600 mb-2">Buscar Videojuego (API IGDB) o Introducir Manualmente</label>
+                        
+                        {{-- CORRECCIÓN: Usamos AlpineJS para sincronizar lo que escribes con el campo oculto en tiempo real --}}
                         <input type="text" 
                                x-model="search" 
                                @input.debounce.500ms="fetchGames()"
                                class="w-full rounded-xl bg-gray-50 border-gray-200 text-gray-800 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm py-4 font-bold" 
-                               placeholder="Empieza a escribir para buscar..." autocomplete="off">
+                               placeholder="Empieza a escribir para buscar o introduce un título inventado..." autocomplete="off">
                         
                         <div x-show="results.length > 0" class="absolute z-50 w-full bg-white mt-2 rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
                             <template x-for="game in results">
@@ -53,7 +70,8 @@
                             </template>
                         </div>
                         
-                        <input type="hidden" name="titulo" id="real_titulo" required>
+                        {{-- CORRECCIÓN: Le añadimos :value="search" para que siempre tenga el valor del input visible --}}
+                        <input type="hidden" name="titulo" id="real_titulo" :value="search" required>
                         <input type="hidden" name="portada_url" id="portada_url_hidden">
                         <input type="hidden" name="igdb_id" id="igdb_id_hidden">
                     </div>
@@ -62,7 +80,7 @@
                         <div class="flex items-center gap-4 p-4 bg-green-50 rounded-2xl border border-green-100 animate-pulse">
                             <img :src="selectedGame.cover" class="w-12 h-16 object-cover rounded-lg shadow-md">
                             <div>
-                                <p class="text-[10px] font-black text-green-600 uppercase tracking-widest">Juego Seleccionado</p>
+                                <p class="text-[10px] font-black text-green-600 uppercase tracking-widest">Juego de API Seleccionado</p>
                                 <p class="font-black text-gray-800 italic" x-text="selectedGame.name"></p>
                             </div>
                         </div>
@@ -119,7 +137,7 @@
                     </div>
 
                     <div class="p-6 bg-indigo-50 rounded-2xl border-2 border-dashed border-indigo-100">
-                        <label class="block font-black text-xs uppercase tracking-widest text-indigo-600 mb-3 text-center">O sube tu propia carátula</label>
+                        <label class="block font-black text-xs uppercase tracking-widest text-indigo-600 mb-3 text-center">O sube tu propia carátula (Opcional)</label>
                         <input type="file" name="portada" accept="image/*" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer block w-full">
                     </div>
 

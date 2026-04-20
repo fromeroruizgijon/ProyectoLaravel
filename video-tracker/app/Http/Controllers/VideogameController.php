@@ -13,6 +13,7 @@ class VideogameController extends Controller
 {
     public function index()
     {
+        //carga la biblioteca del usuario
         $videojuegos = Videogame::with('game')->where('user_id', Auth::id())->get();
         return view('biblioteca', compact('videojuegos'));
     }
@@ -65,6 +66,7 @@ class VideogameController extends Controller
 
     public function catalogo(Request $request)
     {
+        //muestra los registros de la base de datos, también busca y filtra
         $buscar = $request->input('search');
         $genero = $request->input('genero');
 
@@ -129,15 +131,14 @@ class VideogameController extends Controller
     {
         $juego = Game::with(['comments.user', 'achievements'])->findOrFail($id);
 
-        // Sistema de 20 Logros Automáticos
+        // 20 logros automáticos
         if ($juego->achievements->isEmpty()) {
             $tipos = ['Bronce', 'Plata', 'Oro', 'Platino'];
             
             for ($i = 1; $i <= 20; $i++) {
-                // Determinamos la dificultad/tipo según el número
                 $tipo = $tipos[($i - 1) % 4]; 
                 
-                // Nombres dinámicos para que no sean todos iguales
+                // nombres aleatorios
                 $nombre = match(true) {
                     $i === 1  => "Bienvenido a " . $juego->titulo,
                     $i === 10 => "Mitad del Camino",
@@ -153,7 +154,6 @@ class VideogameController extends Controller
                     'imagen_url'  => 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png',
                 ]);
             }
-            // Recargamos la relación para que el conteo en el Blade sea 20
             $juego = $juego->fresh('achievements');
         }
 
