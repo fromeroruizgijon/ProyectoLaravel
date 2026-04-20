@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory; // 1. Importar el Trait
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Achievement extends Model
 {
-    use HasFactory; // 2. Usar el Trait dentro de la clase
+    use HasFactory;
 
     protected $fillable = ['game_id', 'nombre', 'descripcion', 'imagen_url'];
 

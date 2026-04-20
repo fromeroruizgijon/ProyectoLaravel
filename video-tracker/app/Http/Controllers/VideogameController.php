@@ -25,6 +25,7 @@ class VideogameController extends Controller
 
     public function store(Request $request)
     {
+        //validaciones
         $validated = $request->validate([
             'titulo' => 'required|string',
             'genero' => 'required|string',
@@ -126,7 +127,7 @@ class VideogameController extends Controller
         $videojuego->delete();
         return back()->with('success', 'Juego eliminado de tu biblioteca');
     }
-
+    //vista detalle
     public function show($id)
     {
         $juego = Game::with(['comments.user', 'achievements'])->findOrFail($id);
