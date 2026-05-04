@@ -22,7 +22,7 @@ class Game extends Model
         return $this->videogames()->avg('puntuacion_personal') ?: 0;
     }
     public function comments() {
-        return $this->hasMany(Comment::class)->latest(); //latest
+        return $this->hasMany(Comment::class)->latest();
     }
     public function achievements()
     {

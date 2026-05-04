@@ -53,6 +53,26 @@ class VideogameController extends Controller
             $game->update(['portada' => $path]);
         }
 
+        if ($game->wasRecentlyCreated) {
+            $tipos = ['Bronce', 'Plata', 'Oro', 'Platino'];
+            for ($i = 1; $i <= 20; $i++) {
+                $tipo = $tipos[($i - 1) % 4];
+                $nombre = match(true) {
+                    $i === 1  => "Bienvenido a " . $game->titulo,
+                    $i === 10 => "Mitad del Camino",
+                    $i === 20 => "Leyenda de " . $game->titulo,
+                    $i % 5 === 0 => "Desafío Especial Nivel " . ($i / 5),
+                    default => "Logro de " . $tipo . " #" . $i
+                };
+                Achievement::create([
+                    'game_id'     => $game->id,
+                    'nombre'      => $nombre,
+                    'descripcion' => "Has desbloqueado el desafío número {$i} en la categoría {$tipo}.",
+                    'imagen_url'  => 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png',
+                ]);
+            }
+        }
+
         Videogame::updateOrCreate(
             ['user_id' => Auth::id(), 'game_id' => $game->id],
             [
@@ -88,7 +108,8 @@ class VideogameController extends Controller
     {
         $validated = $request->validate([
             'puntuacion_personal' => 'required|numeric|min:0|max:10',
-            'estado' => 'required'
+            'estado' => 'required',
+            'plataforma' => 'required|in:PC,PS5,PS4,Xbox,Switch',
         ]);
 
         Videogame::updateOrCreate(
@@ -96,7 +117,7 @@ class VideogameController extends Controller
             [
                 'puntuacion_personal' => $validated['puntuacion_personal'],
                 'estado' => $validated['estado'],
-                'plataforma' => 'PC' 
+                'plataforma' => $validated['plataforma'],
             ]
         );
 
@@ -131,32 +152,6 @@ class VideogameController extends Controller
     public function show($id)
     {
         $juego = Game::with(['comments.user', 'achievements'])->findOrFail($id);
-
-        // 20 logros automáticos
-        if ($juego->achievements->isEmpty()) {
-            $tipos = ['Bronce', 'Plata', 'Oro', 'Platino'];
-            
-            for ($i = 1; $i <= 20; $i++) {
-                $tipo = $tipos[($i - 1) % 4]; 
-                
-                // nombres aleatorios
-                $nombre = match(true) {
-                    $i === 1  => "Bienvenido a " . $juego->titulo,
-                    $i === 10 => "Mitad del Camino",
-                    $i === 20 => "Leyenda de " . $juego->titulo,
-                    $i % 5 === 0 => "Desafío Especial Nivel " . ($i / 5),
-                    default => "Logro de " . $tipo . " #" . $i
-                };
-
-                Achievement::create([
-                    'game_id'     => $juego->id,
-                    'nombre'      => $nombre,
-                    'descripcion' => "Has desbloqueado el desafío número {$i} en la categoría {$tipo}.",
-                    'imagen_url'  => 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png',
-                ]);
-            }
-            $juego = $juego->fresh('achievements');
-        }
 
         return view('show', compact('juego'));
     }
